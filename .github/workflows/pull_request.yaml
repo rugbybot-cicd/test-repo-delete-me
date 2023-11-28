@@ -1,0 +1,66 @@
+# This is a template file. Please replace <service_name> with the name of the Service Repo and kindly make changes to the file to suit the repo's requirements.
+
+# name: Pull Request Workflow
+# on: pull_request
+# concurrency:
+#   group: ${{ github.head_ref }}
+#   cancel-in-progress: true
+
+# jobs:
+#   build-and-publish-deploy-image:
+#     uses: compute-cloud/shared-pipeline-actions/.github/workflows/image_build_n_publish_wc.yaml@v2
+#     with:
+#       build_type: "deploy"
+#       makefile_target_for_build_deploy_image: "docker-deploy-image-all"
+#       makefile_target_for_push_deploy_image: "push-docker-deploy-image-all"
+#       makefile_target_for_sign_deploy_image: "sign-docker-deploy-image-all"
+#     secrets:
+#       gh_token: ${{ secrets.GH_TOKEN }}
+#       cosign_password: ${{ secrets.COSIGN_PASSWORD }}
+#       cosign_key: ${{ secrets.COSIGN_KEY }}
+
+#   sonarcloud:
+#     uses: compute-cloud/shared-pipeline-actions/.github/workflows/sonarcloud_wc.yaml@v2
+#     secrets:
+#       gh_token: ${{ secrets.GITHUB_TOKEN }}
+#       sonarcloud_token: ${{ secrets.SONARCLOUD_TOKEN }}
+
+#   secrets-scanner:
+#     uses: hpe-actions/secrets-scanner/.github/workflows/secrets-scanner.yml@v2
+#     with:
+#       config_override: ".gitleaks-local.toml"
+
+#   trivy-vulnerability-scan-<service_name>:
+#     needs: [build-and-publish-deploy-image]
+#     uses: compute-cloud/shared-pipeline-actions/.github/workflows/trivy_vulnerability_scan.yaml@v2
+#     with:
+#       service_name: <service_name>
+#     secrets:
+#       gh_token: ${{ secrets.GH_TOKEN }}
+
+#   trivy-vulnerability-scan-<service_name>-alembic:
+#     needs: [build-and-publish-deploy-image]
+#     uses: compute-cloud/shared-pipeline-actions/.github/workflows/trivy_vulnerability_scan.yaml@v2
+#     with:
+#       service_name: <service_name>-alembic
+#     secrets:
+#       gh_token: ${{ secrets.GH_TOKEN }}
+
+#   integ-tests:
+#     needs: [isolated-tests, secrets-scanner, build-and-publish-deploy-image]
+#     uses: compute-cloud/shared-pipeline-actions/.github/workflows/integ_tests_wc.yaml@v2
+#     with:
+#       service_name: <service_name>
+#       service_uses_database: true
+#       postgres_database_name: <service_name> 
+#     secrets: inherit
+
+#   isolated-tests:
+#     uses: compute-cloud/shared-pipeline-actions/.github/workflows/isolated_test_wc.yaml@v2
+#     with:
+#       tests_target: unit-tests
+#     secrets:
+#       gh_token: ${{ secrets.GH_TOKEN }}
+
+#   dependabot-check:
+#     uses: compute-cloud/shared-pipeline-actions/.github/workflows/set_dependabot_details.yaml@v2

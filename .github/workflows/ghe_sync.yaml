@@ -1,0 +1,21 @@
+# This is a workflow to sync all changes to github cloud repos to github.hpe enterprise repo
+
+name: Repo Sync from GHC to GHE
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.ref }}/ghe_sync
+
+jobs:
+  sync_repo_to_ghe:
+    uses: compute-cloud/ops-workflows/.github/workflows/gh-ghe-mirror.yaml@v1
+    with:
+      repository: ${{ github.event.repository.name }}
+    secrets:
+      gh_token: ${{ secrets.GH_TOKEN }}
+      ghe_token: ${{ secrets.GHE_TOKEN }}
+      ghe_url: ${{ secrets.GHE_RUGBY_BASE_URL }}

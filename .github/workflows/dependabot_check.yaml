@@ -1,0 +1,64 @@
+name: Dependabot Check
+on:
+  workflow_run:
+    workflows: ["Pull Request Workflow"]
+    types: 
+      - completed
+
+jobs:
+  set_pr_details:
+    runs-on: ubuntu-latest
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    outputs:
+      REPO_NAME: ${{ steps.export-vars.outputs.repo_name }}
+      REPO_REF: ${{ steps.export-vars.outputs.repo_ref }}
+      PR_BRANCH_NAME: ${{ steps.export-vars.outputs.pr_branch_name }}
+      PR_TITLE: ${{ steps.export-vars.outputs.pr_title }}
+      PR_NUMBER: ${{ steps.export-vars.outputs.pr_number }}
+    steps:
+      - name: Download PR Artifact
+        uses: actions/github-script@v3.1.0
+        with:
+          script: |
+            var artifacts = await github.actions.listWorkflowRunArtifacts({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: ${{ github.event.workflow_run.id }},
+            });
+            var matchArtifact = artifacts.data.artifacts.filter((artifact) => {
+              return artifact.name == "${{ github.event.workflow_run.id }}"
+            })[0];
+            var download = await github.actions.downloadArtifact({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               artifact_id: matchArtifact.id,
+               archive_format: 'zip',
+            });
+            var fs = require('fs');
+            fs.writeFileSync('${{ github.workspace }}/${{ github.event.workflow_run.id }}.zip', Buffer.from(download.data));
+          
+      - name: Export PR Details
+        id: export-vars
+        run: |
+          unzip ${{ github.event.workflow_run.id }}.zip
+          set -a
+          source ${{ github.workspace }}/dependabot_pr_data.txt
+          set +a
+          echo "repo_name=$REPO_NAME" >> $GITHUB_OUTPUT
+          echo "repo_ref=$REPO_REF" >> $GITHUB_OUTPUT
+          echo "pr_branch_name=$PR_BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "pr_title=$PR_TITLE" >> $GITHUB_OUTPUT
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+        shell: bash
+
+  create-dependabot-pr:
+    needs: set_pr_details
+    uses: compute-cloud/shared-pipeline-actions/.github/workflows/create_dependabot_pull_request.yaml@v2
+    with:
+      repo_name: ${{ needs.set_pr_details.outputs.REPO_NAME }}
+      repo_ref: ${{ needs.set_pr_details.outputs.REPO_REF }}
+      pr_branch_name: ${{ needs.set_pr_details.outputs.PR_BRANCH_NAME }}
+      pr_title: ${{ needs.set_pr_details.outputs.PR_TITLE }}
+      pr_number: ${{ needs.set_pr_details.outputs.PR_NUMBER }}
+    secrets:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}

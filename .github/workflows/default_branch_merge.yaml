@@ -1,0 +1,21 @@
+# This is a template file. Please replace <service_name> with the name of the Service Repo and kindly make changes to the file to suit the repo's requirements.
+
+# name: Default Branch Merge
+# on:
+#   workflow_dispatch:
+#   push:
+#     branches:
+#       - main
+
+
+# concurrency:
+#   group: ${{ github.ref }}
+
+
+# jobs:
+#   push-to-branch:
+#     uses: compute-cloud/shared-pipeline-actions/.github/workflows/push_default_branch_wc.yaml@v2
+#     with:
+#       services_to_scan: '["<service_name>", "<service_name>-alembic"]'
+#       repos_to_tag: '["<service_name>"]'
+#     secrets: inherit
